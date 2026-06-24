@@ -3,7 +3,7 @@ import styles from './Button.module.css';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
-  variant?: 'primary' | 'ghost';
+  variant?: 'primary' | 'ghost' | 'surface';
 };
 
 export const Button = ({ children, variant = 'primary', className, ...rest }: ButtonProps) => {

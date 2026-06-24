@@ -1,28 +1,22 @@
 import type { CellCoord, PuzzleDefinition, PuzzleWord } from './types';
 
+const ORTHOGONAL_STEPS: readonly { dRow: -1 | 0 | 1; dCol: -1 | 0 | 1 }[] = [
+  { dRow: 0, dCol: 1 },
+  { dRow: 0, dCol: -1 },
+  { dRow: 1, dCol: 0 },
+  { dRow: -1, dCol: 0 },
+];
+
 const inBounds = (puzzle: PuzzleDefinition, coord: CellCoord): boolean =>
   coord.row >= 0 &&
   coord.col >= 0 &&
   coord.row < puzzle.size.rows &&
   coord.col < puzzle.size.cols;
 
-const step = (coord: CellCoord, direction: PuzzleWord['direction']): CellCoord => ({
-  row: coord.row + (direction === 'vertical' ? 1 : 0),
-  col: coord.col + (direction === 'horizontal' ? 1 : 0),
-});
-
 /** Координаты ячеек слова на сетке. */
-export const wordCellCoords = (word: PuzzleWord): CellCoord[] => {
-  const coords: CellCoord[] = [];
-  let current = { ...word.start };
-  for (let i = 0; i < word.text.length; i += 1) {
-    coords.push({ ...current });
-    current = step(current, word.direction);
-  }
-  return coords;
-};
+export const wordCellCoords = (word: PuzzleWord): CellCoord[] => word.path;
 
-/** Проверяет, что выделение совпадает со словом (в любом направлении). */
+/** Проверяет, что выделение совпадает со словом (прямой или обратный путь). */
 export const matchWordFromSelection = (
   puzzle: PuzzleDefinition,
   selection: CellCoord[],
@@ -33,7 +27,7 @@ export const matchWordFromSelection = (
   const reversed = [...selection].reverse();
 
   for (const word of puzzle.words) {
-    const target = wordCellCoords(word);
+    const target = word.path;
     if (coordsEqual(normalized, target) || coordsEqual(reversed, target)) {
       return word;
     }
@@ -46,6 +40,11 @@ const coordsEqual = (a: CellCoord[], b: CellCoord[]): boolean =>
   a.length === b.length &&
   a.every((coord, index) => coord.row === b[index]?.row && coord.col === b[index]?.col);
 
+const isOrthogonalNeighbor = (from: CellCoord, to: CellCoord): boolean =>
+  ORTHOGONAL_STEPS.some(
+    (step) => from.row + step.dRow === to.row && from.col + step.dCol === to.col,
+  );
+
 export const isValidSelectionStep = (
   puzzle: PuzzleDefinition,
   selection: CellCoord[],
@@ -55,18 +54,15 @@ export const isValidSelectionStep = (
   if (selection.some((c) => c.row === next.row && c.col === next.col)) return false;
   if (selection.length === 0) return true;
 
-  const first = selection[0];
-  const last = selection[selection.length - 1];
-  const dRow = Math.sign(next.row - last.row);
-  const dCol = Math.sign(next.col - last.col);
-
-  if (selection.length === 1) {
-    const horizontal = next.row === first.row && Math.abs(next.col - first.col) === 1;
-    const vertical = next.col === first.col && Math.abs(next.row - first.row) === 1;
-    return horizontal || vertical;
-  }
-
-  const baseDRow = Math.sign(last.row - first.row);
-  const baseDCol = Math.sign(last.col - first.col);
-  return dRow === baseDRow && dCol === baseDCol;
+  const last = selection[selection.length - 1]!;
+  return isOrthogonalNeighbor(last, next);
 };
+
+/** Буквы выделенного пути на сетке. */
+export const selectionText = (puzzle: PuzzleDefinition, selection: CellCoord[]): string =>
+  selection
+    .map(({ row, col }) => {
+      const index = row * puzzle.size.cols + col;
+      return puzzle.letters[index] ?? '';
+    })
+    .join('');
