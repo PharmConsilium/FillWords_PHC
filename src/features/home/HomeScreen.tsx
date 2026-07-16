@@ -1,100 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BAYER_PRODUCTS_RB } from '../../domain/catalog/bayerProducts';
-import { getProductInfo } from '../../domain/catalog/bayerProductInfo';
+import { brandRoute, useBrandConfig } from '../../brands';
 import { categorizeWord } from '../../domain/catalog/wordCategory';
 import { buildCampaignChapters } from '../../domain/campaign/chapters';
-import {
-  createDailyPuzzle,
-  dailyChallengeTitle,
-  dailyGridSize,
-} from '../../domain/puzzle/dailyChallenge';
 import { formatElapsed } from '../../domain/progress/levelStars';
 import { isProductDiscovered } from '../../domain/progress/productCollection';
 import { createInfinitePuzzle, infiniteGridSize } from '../../domain/puzzle/infiniteMode';
-import { puzzles } from '../../domain/puzzle/puzzles';
-import type { PuzzleDefinition } from '../../domain/puzzle/types';
 import { Button } from '../../shared/ui/Button/Button';
-import { BayerLogo } from '../../shared/ui/BayerLogo/BayerLogo';
 import { StarsDisplay } from '../../shared/ui/StarsDisplay/StarsDisplay';
 import { useGameProgress } from '../progress/useGameProgress';
 import styles from './HomeScreen.module.css';
-
-const LEVEL_ICONS = ['💊', '🧬', '🦠'] as const;
-
-type LevelOrbProps = {
-  puzzle: PuzzleDefinition;
-  levelIndex: number;
-  variant: 'side' | 'center';
-  completed: boolean;
-  unlocked: boolean;
-  isContinue: boolean;
-  onSelect?: () => void;
-};
-
-const LevelOrb = ({
-  puzzle,
-  levelIndex,
-  variant,
-  completed,
-  unlocked,
-  isContinue,
-  onSelect,
-}: LevelOrbProps) => {
-  const icon = LEVEL_ICONS[levelIndex % LEVEL_ICONS.length];
-  const label = completed ? '✓' : String(levelIndex + 1);
-
-  const content = (
-    <>
-      <div
-        className={[
-          styles.orbRing,
-          completed ? styles.orbRingCompleted : '',
-          isContinue && variant === 'center' ? styles.orbRingActive : '',
-          !unlocked ? styles.orbRingLocked : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        aria-hidden="true"
-      />
-      <div className={styles.orbInner}>
-        <span className={styles.orbIcon} aria-hidden="true">
-          {!unlocked ? '🔒' : icon}
-        </span>
-        <span className={styles.orbLabel}>{unlocked ? label : ''}</span>
-      </div>
-    </>
-  );
-
-  const className = [
-    styles.orb,
-    styles[`orb${variant === 'center' ? 'Center' : 'Side'}`],
-    completed ? styles.orbCompleted : '',
-    !unlocked ? styles.orbLocked : '',
-    isContinue ? styles.orbContinue : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  if (variant === 'center' || !unlocked || !onSelect) {
-    return (
-      <div className={className} aria-label={`${puzzle.title}, сетка ${puzzle.size.rows}×${puzzle.size.cols}`}>
-        {content}
-      </div>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      className={className}
-      onClick={onSelect}
-      aria-label={`Перейти к ${puzzle.title}`}
-    >
-      {content}
-    </button>
-  );
-};
 
 type MapDotProps = {
   levelIndex: number;
@@ -141,43 +56,51 @@ const MapDot = ({ levelIndex, completed, unlocked, isActive, stars, onSelect }: 
 };
 
 type InfiniteMapDotProps = {
+  basePath: string;
   unlocked: boolean;
   nextWave: number;
   record: number;
 };
 
-const InfiniteMapDot = ({ unlocked, nextWave, record }: InfiniteMapDotProps) => {
+const InfiniteMapDot = ({ basePath, unlocked, nextWave, record }: InfiniteMapDotProps) => {
   const label = unlocked
     ? `Бесконечный режим, волна ${nextWave}${record > 0 ? `, рекорд ${record}` : ''}`
     : 'Бесконечный режим — откроется после 18-го уровня';
 
   if (!unlocked) {
     return (
-      <span
-        className={[styles.mapDot, styles.mapDotLocked, styles.mapDotInfinite].join(' ')}
-        aria-label={label}
-        title={label}
-      >
-        ∞
-      </span>
+      <>
+        <span
+          className={[styles.mapDot, styles.mapDotLocked, styles.mapDotInfinite].join(' ')}
+          aria-label={label}
+          title={label}
+        >
+          ∞
+        </span>
+        <span className={styles.infiniteWaveBadge}>Волн пройдено: {record}</span>
+      </>
     );
   }
 
   return (
-    <Link
-      to={`/play/infinite/${nextWave}`}
-      className={[styles.mapDot, styles.mapDotInfinite, styles.mapDotUnlocked].join(' ')}
-      aria-label={label}
-      title={label}
-    >
-      ∞
-    </Link>
+    <>
+      <Link
+        to={`${basePath}/play/infinite/${nextWave}`}
+        className={[styles.mapDot, styles.mapDotInfinite, styles.mapDotUnlocked].join(' ')}
+        aria-label={label}
+        title={label}
+      >
+        ∞
+      </Link>
+      <span className={styles.infiniteWaveBadge}>Волн пройдено: {record}</span>
+    </>
   );
 };
 
-const CAMPAIGN_CHAPTERS = buildCampaignChapters(puzzles.map((puzzle) => puzzle.size.rows));
-
 export const HomeScreen = () => {
+  const brand = useBrandConfig();
+  const puzzles = brand.puzzles;
+  const Logo = brand.Logo;
   const {
     completed,
     totalLevels,
@@ -187,16 +110,22 @@ export const HomeScreen = () => {
     infiniteUnlocked,
     infiniteWaveCompleted,
     nextInfiniteWave,
-    isTodayDailyComplete,
-    todayKey,
     starsEarned,
     starsTotal,
-    dailyStreak,
     productCollection,
     discoveredProducts,
     getLevelStars,
     getLevelBestTimeMs,
-  } = useGameProgress();
+  } = useGameProgress({
+    puzzles,
+    storageKey: brand.storageKey,
+    productCatalog: brand.products,
+  });
+
+  const campaignChapters = useMemo(
+    () => buildCampaignChapters(puzzles.map((puzzle) => puzzle.size.rows)),
+    [puzzles],
+  );
 
   const continueIndex = useMemo(() => {
     const index = puzzles.findIndex((puzzle) => puzzle.id === continueLevelId);
@@ -211,8 +140,6 @@ export const HomeScreen = () => {
 
   const activeIndex = Math.min(Math.max(viewIndex, 0), puzzles.length - 1);
   const activePuzzle = puzzles[activeIndex]!;
-  const prevPuzzle = activeIndex > 0 ? puzzles[activeIndex - 1] : undefined;
-  const nextPuzzle = activeIndex < puzzles.length - 1 ? puzzles[activeIndex + 1] : undefined;
 
   const activeUnlocked = isUnlocked(activeIndex);
   const activeCompleted = isComplete(activePuzzle.id);
@@ -231,121 +158,24 @@ export const HomeScreen = () => {
   };
 
   const nextInfinitePuzzle = useMemo(
-    () => (infiniteUnlocked ? createInfinitePuzzle(nextInfiniteWave) : undefined),
-    [infiniteUnlocked, nextInfiniteWave],
+    () => (infiniteUnlocked ? createInfinitePuzzle(nextInfiniteWave, brand.wordPool) : undefined),
+    [brand.wordPool, infiniteUnlocked, nextInfiniteWave],
   );
-
-  const dailyPuzzle = useMemo(() => createDailyPuzzle(), [todayKey]);
-  const dailyGrid = dailyGridSize();
-  const dailyTitle = dailyChallengeTitle();
 
   const infiniteGrid = infiniteUnlocked ? infiniteGridSize(nextInfiniteWave) : 0;
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} data-brand={brand.key}>
       <section className={styles.hero}>
         <div className={styles.logoWrap}>
-          <BayerLogo />
+          <Logo />
         </div>
-        <h1 className={styles.gameTitle}>Филворды</h1>
-        <p className={styles.tagline}>Science for a better life</p>
-        <p className={styles.subtitle}>
-          Найдите на сетке названия препаратов Bayer и слова о здоровье и жизни. Соединяйте
-          соседние буквы линией — вверх, вниз, влево, вправо; путь может изгибаться, буквой
-          «Г» и иначе.
-        </p>
+        <h1 className={styles.gameTitle}>{brand.gameTitle}</h1>
       </section>
 
-      <section className={styles.campaign} aria-label="Прогресс кампании">
-        <div className={styles.campaignHeader}>
-          <span className={styles.campaignLabel}>Пройдено уровней</span>
-          <span className={styles.campaignCount}>
-            {completed} / {totalLevels}
-          </span>
-        </div>
-        <div className={styles.campaignBar} aria-hidden="true">
-          <div className={styles.campaignFill} style={{ width: `${campaignProgress}%` }} />
-        </div>
-        <p className={styles.starsSummary}>
-          Звёзды: <strong>{starsEarned}</strong> / {starsTotal}
-        </p>
-      </section>
-
-      <section className={styles.daily} aria-label="Челлендж дня">
-        <div className={styles.dailyHeader}>
-          <h2 className={styles.dailyTitle}>Челлендж дня</h2>
-          {isTodayDailyComplete ? (
-            <span className={styles.dailyBadge}>Пройден</span>
-          ) : (
-            <span className={styles.dailyBadgeOpen}>Новый</span>
-          )}
-        </div>
-        <p className={styles.dailyMeta}>
-          {dailyTitle} · сетка {dailyGrid}×{dailyGrid} · {dailyPuzzle.words.length} слов · одна
-          подсказка
-          {dailyStreak > 0 ? ` · серия ${dailyStreak} ${dailyStreak === 1 ? 'день' : dailyStreak < 5 ? 'дня' : 'дней'}` : ''}
-        </p>
-        <p className={styles.dailyHint}>
-          Одна сетка для всех игроков сегодня. Найдите все слова и вернитесь завтра за новым
-          челленджем.
-        </p>
-        <Link to="/play/daily" className={styles.dailyPlay}>
-          <Button>{isTodayDailyComplete ? 'Играть снова' : 'Играть челлендж'}</Button>
-        </Link>
-      </section>
+      <p className={styles.subtitle}>{brand.subtitle}</p>
 
       <section className={styles.levelPath} aria-label="Выбор уровня">
-        <div className={styles.pathRow}>
-          <div className={styles.pathSlot}>
-            {prevPuzzle ? (
-              <LevelOrb
-                puzzle={prevPuzzle}
-                levelIndex={activeIndex - 1}
-                variant="side"
-                completed={isComplete(prevPuzzle.id)}
-                unlocked={isUnlocked(activeIndex - 1)}
-                isContinue={prevPuzzle.id === continueLevelId}
-                onSelect={() => shiftView(-1)}
-              />
-            ) : (
-              <div className={styles.pathPlaceholder} aria-hidden="true" />
-            )}
-          </div>
-
-          <div className={styles.pathConnector} aria-hidden="true" />
-
-          <div className={styles.pathSlot}>
-            <LevelOrb
-              puzzle={activePuzzle}
-              levelIndex={activeIndex}
-              variant="center"
-              completed={activeCompleted}
-              unlocked={activeUnlocked}
-              isContinue={activePuzzle.id === continueLevelId}
-            />
-          </div>
-
-          <div className={styles.pathConnector} aria-hidden="true" />
-
-          <div className={styles.pathSlot}>
-            {nextPuzzle ? (
-              <LevelOrb
-                puzzle={nextPuzzle}
-                levelIndex={activeIndex + 1}
-                variant="side"
-                completed={isComplete(nextPuzzle.id)}
-                unlocked={isUnlocked(activeIndex + 1)}
-                isContinue={nextPuzzle.id === continueLevelId}
-                onSelect={
-                  isUnlocked(activeIndex + 1) ? () => shiftView(1) : undefined
-                }
-              />
-            ) : (
-              <div className={styles.pathPlaceholder} aria-hidden="true" />
-            )}
-          </div>
-        </div>
-
         <div className={styles.levelDetails}>
           <h2 className={styles.levelTitle}>{activePuzzle.title}</h2>
           <p className={styles.levelMeta}>
@@ -370,7 +200,7 @@ export const HomeScreen = () => {
             <p className={styles.wordPreviewLabel}>Слова на уровне</p>
             <ul className={styles.wordPreviewList}>
               {previewWords.map((word) => {
-                const category = categorizeWord(word.text);
+                const category = categorizeWord(word.text, brand.products, brand.neutralWords);
                 return (
                   <li
                     key={word.id}
@@ -387,7 +217,7 @@ export const HomeScreen = () => {
           </div>
 
           {activeUnlocked ? (
-            <Link to={`/play/${activePuzzle.id}`} className={styles.playLink}>
+            <Link to={brandRoute(brand, `/play/${activePuzzle.id}`)} className={styles.playLink}>
               <Button>
                 {activePuzzle.id === continueLevelId && !activeCompleted
                   ? 'Продолжить'
@@ -424,14 +254,33 @@ export const HomeScreen = () => {
         </div>
       </section>
 
-      <section className={styles.campaignMap} aria-label="Карта кампании">
-        <h2 className={styles.campaignMapTitle}>Карта кампании</h2>
-        <p className={styles.campaignMapHint}>
-          От 4×4 до 12×12 — нажмите открытый уровень
-          {!infiniteUnlocked ? ' · ∞ после 18-го' : ''}
+      <section className={styles.campaign} aria-label="Прогресс кампании">
+        <div className={styles.campaignHeader}>
+          <span className={styles.campaignLabel}>Пройдено уровней</span>
+          <span className={styles.campaignCount}>
+            {completed} / {totalLevels}
+          </span>
+        </div>
+        <div className={styles.campaignBar} aria-hidden="true">
+          <div className={styles.campaignFill} style={{ width: `${campaignProgress}%` }} />
+        </div>
+        <p className={styles.starsSummary}>
+          Звёзды: <strong>{starsEarned}</strong> / {starsTotal}
         </p>
+      </section>
+
+      <details className={styles.campaignMap}>
+        <summary className={styles.campaignMapSummary}>
+          <span className={styles.campaignMapTitle}>Карта филвордов</span>
+          <span className={styles.campaignMapToggle}>Развернуть</span>
+        </summary>
+        <div className={styles.campaignMapBody}>
+          <p className={styles.campaignMapHint}>
+            От 4×4 до 12×12 — нажмите открытый уровень
+            {!infiniteUnlocked ? ' · ∞ после 18-го' : ''}
+          </p>
         <div className={styles.campaignMapTrack}>
-          {CAMPAIGN_CHAPTERS.map((chapter) => (
+          {campaignChapters.map((chapter) => (
             <div key={chapter.size} className={styles.campaignChapter}>
               <div className={styles.chapterHeading}>
                 <span className={styles.chapterLabel}>
@@ -456,10 +305,13 @@ export const HomeScreen = () => {
               </div>
             </div>
           ))}
-          <div className={styles.campaignChapter}>
-            <span className={styles.chapterLabel}>∞</span>
+          <div className={[styles.campaignChapter, styles.infiniteChapter].join(' ')}>
+            <div className={styles.chapterHeading}>
+              <span className={styles.chapterLabel}>Бесконечный режим</span>
+            </div>
             <div className={styles.chapterDots}>
               <InfiniteMapDot
+                basePath={brand.basePath}
                 unlocked={infiniteUnlocked}
                 nextWave={nextInfiniteWave}
                 record={infiniteWaveCompleted}
@@ -476,27 +328,28 @@ export const HomeScreen = () => {
               {' · сетка '}
               {infiniteGrid}×{infiniteGrid} · {nextInfinitePuzzle.words.length} слов
             </p>
-            <Link to={`/play/infinite/${nextInfiniteWave}`} className={styles.infiniteMapPlay}>
+            <Link to={brandRoute(brand, `/play/infinite/${nextInfiniteWave}`)} className={styles.infiniteMapPlay}>
               <Button>
                 {infiniteWaveCompleted > 0 ? 'Продолжить волны' : 'Начать бесконечный режим'}
               </Button>
             </Link>
           </div>
         )}
-      </section>
+        </div>
+      </details>
 
       <section className={styles.collection} aria-label="Коллекция препаратов">
         <div className={styles.collectionHeader}>
-          <h2 className={styles.collectionTitle}>Коллекция Bayer</h2>
+          <h2 className={styles.collectionTitle}>{brand.collectionTitle}</h2>
           <span className={styles.collectionCount}>
             {productCollection.found} / {productCollection.total}
           </span>
         </div>
         <p className={styles.collectionHint}>
-          Найдите препараты Bayer в уровнях — они попадут в коллекцию.
+          {brand.collectionHint}
         </p>
         <ul className={styles.collectionList}>
-          {BAYER_PRODUCTS_RB.map((product) => {
+          {brand.products.map((product) => {
             const found = isProductDiscovered(discoveredProducts, product);
             return (
               <li
@@ -505,11 +358,11 @@ export const HomeScreen = () => {
                   styles.collectionItem,
                   found ? styles.collectionItemFound : styles.collectionItemLocked,
                 ].join(' ')}
-                title={found ? getProductInfo(product).tagline : 'Ещё не найден'}
+                title={found ? brand.getProductInfo(product).tagline : 'Ещё не найден'}
               >
                 <span className={styles.collectionName}>{found ? product : '???'}</span>
                 {found && (
-                  <span className={styles.collectionTagline}>{getProductInfo(product).tagline}</span>
+                  <span className={styles.collectionTagline}>{brand.getProductInfo(product).tagline}</span>
                 )}
               </li>
             );
@@ -518,10 +371,9 @@ export const HomeScreen = () => {
       </section>
 
       <footer className={styles.footer}>
-        <a href="https://ch.bayer.by/" target="_blank" rel="noopener noreferrer">
-          Bayer Consumer Health в Беларуси
+        <a href={brand.siteUrl} target="_blank" rel="noopener noreferrer">
+          <Logo compact />
         </a>
-        <span className={styles.slogan}>Здоровье — в ваших руках</span>
       </footer>
     </main>
   );

@@ -1,0 +1,39 @@
+.egis-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  color: #06417f;
+}
+
+.egis-logo__mark {
+  display: block;
+  width: 170px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.egis-logo__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.egis-logo__tagline {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.egis-logo[data-compact] {
+  gap: 8px;
+}
+
+.egis-logo[data-compact] .egis-logo__mark {
+  width: 72px;
+}
+
+.egis-logo[data-compact] .egis-logo__tagline {
+  display: none;
+}

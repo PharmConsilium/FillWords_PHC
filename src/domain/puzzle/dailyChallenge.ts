@@ -28,13 +28,16 @@ export const dailyGridSize = (date: Date = new Date()): number => {
   return day === 0 || day === 6 ? 7 : 6;
 };
 
-export const createDailyPuzzle = (date: Date = new Date()): PuzzleDefinition => {
+export const createDailyPuzzle = (
+  date: Date = new Date(),
+  wordPool?: readonly string[],
+): PuzzleDefinition => {
   const dateKey = dailyDateKey(date);
   const size = dailyGridSize(date);
   const seed = dailyChallengeSeed(date);
 
   for (let attempt = 0; attempt < 80; attempt += 1) {
-    const words = pickWordsForGrid(size, seed * 100 + attempt);
+    const words = pickWordsForGrid(size, seed * 100 + attempt, wordPool);
     try {
       return generatePuzzle({
         id: `daily-${dateKey}`,

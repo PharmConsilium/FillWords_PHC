@@ -4,15 +4,18 @@ import { wordLetters } from './wordLetters';
 
 export type WordCategory = 'bayer' | 'neutral';
 
-const neutralLetterSet = new Set(NEUTRAL_WORDS.map(wordLetters));
-const bayerLetterSet = new Set(BAYER_PRODUCTS_RB.map(wordLetters));
-
-export const categorizeWord = (word: string): WordCategory => {
+export const categorizeWord = (
+  word: string,
+  products: readonly string[] = BAYER_PRODUCTS_RB,
+  neutralWords: readonly string[] = NEUTRAL_WORDS,
+): WordCategory => {
   const letters = wordLetters(word);
+  const neutralLetterSet = new Set(neutralWords.map(wordLetters));
+  const productLetterSet = new Set(products.map(wordLetters));
   if (neutralLetterSet.has(letters)) {
     return 'neutral';
   }
-  if (bayerLetterSet.has(letters)) {
+  if (productLetterSet.has(letters)) {
     return 'bayer';
   }
   return 'bayer';

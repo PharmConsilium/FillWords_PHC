@@ -65,9 +65,13 @@ const findWordSubset = (
   return null;
 };
 
-export const pickWordsForGrid = (size: number, seed: number): string[] => {
+export const pickWordsForGrid = (
+  size: number,
+  seed: number,
+  wordPool: readonly string[] = WORD_POOL,
+): string[] => {
   const target = size * size;
-  const candidates = WORD_POOL.map((word) => ({
+  const candidates = wordPool.map((word) => ({
     word,
     length: wordLetterCount(word),
   }))
@@ -86,11 +90,14 @@ export const pickWordsForGrid = (size: number, seed: number): string[] => {
   throw new Error(`Не удалось подобрать слова для сетки ${size}×${size}`);
 };
 
-export const createInfinitePuzzle = (wave: number): PuzzleDefinition => {
+export const createInfinitePuzzle = (
+  wave: number,
+  wordPool: readonly string[] = WORD_POOL,
+): PuzzleDefinition => {
   const size = infiniteGridSize(wave);
 
   for (let attempt = 0; attempt < 80; attempt += 1) {
-    const words = pickWordsForGrid(size, wave * 10_000 + attempt);
+    const words = pickWordsForGrid(size, wave * 10_000 + attempt, wordPool);
     try {
       return generatePuzzle({
         id: `infinite-wave-${wave}`,

@@ -40,6 +40,18 @@ const coordsEqual = (a: CellCoord[], b: CellCoord[]): boolean =>
   a.length === b.length &&
   a.every((coord, index) => coord.row === b[index]?.row && coord.col === b[index]?.col);
 
+export const selectedCoordIndex = (selection: readonly CellCoord[], coord: CellCoord): number =>
+  selection.findIndex((item) => item.row === coord.row && item.col === coord.col);
+
+export const rollbackSelectionToCoord = (
+  selection: readonly CellCoord[],
+  coord: CellCoord,
+): CellCoord[] | null => {
+  const index = selectedCoordIndex(selection, coord);
+  if (index < 0) return null;
+  return selection.slice(0, index + 1);
+};
+
 const isOrthogonalNeighbor = (from: CellCoord, to: CellCoord): boolean =>
   ORTHOGONAL_STEPS.some(
     (step) => from.row + step.dRow === to.row && from.col + step.dCol === to.col,

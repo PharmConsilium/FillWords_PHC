@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
-import { getProductInfo } from '../../domain/catalog/bayerProductInfo';
+import { brandRoute, useBrandConfig } from '../../brands';
 import { categorizeWord } from '../../domain/catalog/wordCategory';
 import {
   createDailyPuzzle,
@@ -10,10 +10,10 @@ import {
 import { letterAt } from '../../domain/puzzle/generatePuzzle';
 import { cellKeyFromCoord, parseCellKey, pickHintTarget } from '../../domain/puzzle/hints';
 import { createInfinitePuzzle, parseInfiniteWave } from '../../domain/puzzle/infiniteMode';
-import { puzzles, puzzlesById } from '../../domain/puzzle/puzzles';
 import {
   isValidSelectionStep,
   matchWordFromSelection,
+  rollbackSelectionToCoord,
   selectionText,
   wordCellCoords,
 } from '../../domain/puzzle/selection';
@@ -27,7 +27,6 @@ import {
 import type { LevelStars } from '../../domain/progress/types';
 import { useGameProgress } from '../progress/useGameProgress';
 import { Button } from '../../shared/ui/Button/Button';
-import { BayerLogo } from '../../shared/ui/BayerLogo/BayerLogo';
 import { StarsDisplay } from '../../shared/ui/StarsDisplay/StarsDisplay';
 import { ProductToast } from './ProductToast';
 import { wordHighlightColor } from './wordColors';
@@ -64,9 +63,13 @@ const hintLabelForCell = (
 const displayName = (word: PuzzleWord): string => word.label ?? word.text;
 
 export const GameScreen = () => {
+  const brand = useBrandConfig();
+  const puzzles = brand.puzzles;
+  const puzzlesById = brand.puzzlesById;
+  const Logo = brand.Logo;
   const location = useLocation();
   const { puzzleId, wave: waveParam } = useParams<{ puzzleId?: string; wave?: string }>();
-  const isDaily = location.pathname === '/play/daily';
+  const isDaily = location.pathname.endsWith('/play/daily');
   const infiniteWave = parseInfiniteWave(waveParam);
   const isInfinite = !isDaily && infiniteWave !== undefined;
   const todayKey = dailyDateKey();
@@ -86,17 +89,21 @@ export const GameScreen = () => {
     isHintUsed: isSessionHintUsed,
     getHintCellKey,
     isTodayDailyComplete,
-  } = useGameProgress();
+  } = useGameProgress({
+    puzzles,
+    storageKey: brand.storageKey,
+    productCatalog: brand.products,
+  });
 
   const puzzle = useMemo((): PuzzleDefinition | undefined => {
     if (isDaily) {
-      return createDailyPuzzle();
+      return createDailyPuzzle(new Date(), brand.wordPool);
     }
     if (isInfinite && infiniteWave !== undefined) {
-      return createInfinitePuzzle(infiniteWave);
+      return createInfinitePuzzle(infiniteWave, brand.wordPool);
     }
     return puzzleId ? puzzlesById[puzzleId] : undefined;
-  }, [isDaily, isInfinite, infiniteWave, puzzleId]);
+  }, [brand.wordPool, isDaily, isInfinite, infiniteWave, puzzleId, puzzlesById]);
 
   const [selection, setSelection] = useState<CellCoord[]>([]);
   const [foundWordIds, setFoundWordIds] = useState<string[]>([]);
@@ -111,7 +118,7 @@ export const GameScreen = () => {
 
   const levelIndex = useMemo(
     () => (!isInfinite && !isDaily && puzzleId ? puzzles.findIndex((item) => item.id === puzzleId) : -1),
-    [isDaily, isInfinite, puzzleId],
+    [isDaily, isInfinite, puzzleId, puzzles],
   );
 
   const isCampaignLevel = !isDaily && !isInfinite && levelIndex >= 0;
@@ -155,8 +162,8 @@ export const GameScreen = () => {
     } else {
       setHintLabel(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- progress read at session enter
-  }, [sessionKey, puzzle, alreadyCompleted]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- progress read only when entering a session
+  }, [sessionKey, puzzle]);
 
   useEffect(() => {
     if (!sessionKey || alreadyCompleted || foundWordIds.length === 0) return;
@@ -177,7 +184,7 @@ export const GameScreen = () => {
   const nextPuzzle = useMemo(() => {
     if (isInfinite || isDaily || levelIndex < 0 || levelIndex >= puzzles.length - 1) return undefined;
     return puzzles[levelIndex + 1];
-  }, [isDaily, isInfinite, levelIndex]);
+  }, [isDaily, isInfinite, levelIndex, puzzles]);
 
   const showNextLevel =
     !isInfinite && !isDaily && nextPuzzle !== undefined && isUnlocked(levelIndex + 1);
@@ -223,21 +230,21 @@ export const GameScreen = () => {
 
   if (!puzzle) {
     return (
-      <main className={styles.page}>
+      <main className={styles.page} data-brand={brand.key}>
         <div className={styles.notFound}>
           <p>Уровень не найден.</p>
-          <Link to="/">На главную</Link>
+          <Link to={brand.basePath}>На главную</Link>
         </div>
       </main>
     );
   }
 
   if (isInfinite && infiniteWave !== undefined && !isInfiniteWaveUnlocked(infiniteWave)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={brand.basePath} replace />;
   }
 
   if (!isInfinite && !isDaily && levelIndex >= 0 && !isUnlocked(levelIndex)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={brand.basePath} replace />;
   }
 
   const triggerWrongFeedback = (): void => {
@@ -253,7 +260,7 @@ export const GameScreen = () => {
 
   const showProductCard = (word: PuzzleWord): void => {
     const name = displayName(word);
-    if (categorizeWord(word.text) !== 'bayer') return;
+    if (categorizeWord(word.text, brand.products, brand.neutralWords) !== 'bayer') return;
     discoverProduct(name);
     setProductToast(name);
   };
@@ -275,6 +282,8 @@ export const GameScreen = () => {
   const onCellPointerEnter = (coord: CellCoord): void => {
     setSelection((prev) => {
       if (prev.length === 0) return prev;
+      const rollback = rollbackSelectionToCoord(prev, coord);
+      if (rollback) return rollback;
       if (!isValidSelectionStep(puzzle, prev, coord)) return prev;
       return [...prev, coord];
     });
@@ -331,15 +340,20 @@ export const GameScreen = () => {
     ? 'Отличная работа! Завтра будет новая сетка.'
     : isInfinite
       ? 'Новая сетка со случайными словами ждёт вас в следующей волне.'
-      : 'Вы нашли все слова на этом уровне. Science for a better life.';
+      : brand.winText;
 
   const canUseHint = !hintUsed && !isComplete && foundCount < totalWords;
   const threeStarTargetMs = isCampaignLevel ? threeStarTimeLimitMs(puzzle.size.rows) : 0;
 
   return (
-    <main className={styles.page} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}>
+    <main
+      className={styles.page}
+      data-brand={brand.key}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerUp}
+    >
       <header className={styles.topBar}>
-        <Link to="/" className={styles.back}>
+        <Link to={brand.basePath} className={styles.back}>
           ← В главное меню
         </Link>
         <div className={styles.headerMain}>
@@ -350,7 +364,7 @@ export const GameScreen = () => {
             {isCampaignLevel && !isComplete ? ` · ${formatElapsed(elapsedMs)}` : ''}
           </p>
         </div>
-        <BayerLogo compact />
+        <Logo compact />
       </header>
 
       <div className={styles.progressBar} aria-hidden="true">
@@ -443,7 +457,7 @@ export const GameScreen = () => {
             .sort((a, b) => displayName(a).localeCompare(displayName(b), 'ru'))
             .map((word) => {
               const isFoundWord = foundWordIds.includes(word.id);
-              const category = categorizeWord(word.text);
+              const category = categorizeWord(word.text, brand.products, brand.neutralWords);
               const color = colors[word.id] ?? wordHighlightColor(0);
               return (
                 <li
@@ -457,7 +471,7 @@ export const GameScreen = () => {
                         : styles.wordChipBayer,
                   ].join(' ')}
                   style={isFoundWord ? { background: color } : undefined}
-                  title={category === 'bayer' ? getProductInfo(displayName(word)).tagline : undefined}
+                  title={category === 'bayer' ? brand.getProductInfo(displayName(word)).tagline : undefined}
                 >
                   {displayName(word)}
                 </li>
@@ -467,7 +481,14 @@ export const GameScreen = () => {
       </section>
 
       {productToast && (
-        <ProductToast productName={productToast} onDismiss={dismissProductToast} />
+        <ProductToast
+          productName={productToast}
+          productLabel={brand.productLabel}
+          productInfo={brand.getProductInfo(productToast)}
+          siteUrl={brand.siteUrl}
+          siteLabel={brand.siteLabel}
+          onDismiss={dismissProductToast}
+        />
       )}
 
       {isComplete && (
@@ -493,21 +514,21 @@ export const GameScreen = () => {
             <p className={styles.winText}>{winText}</p>
             <div className={styles.winActions}>
               {showNextLevel && nextPuzzle && (
-                <Link to={`/play/${nextPuzzle.id}`} className={styles.winLink}>
+                <Link to={brandRoute(brand, `/play/${nextPuzzle.id}`)} className={styles.winLink}>
                   <Button>Следующий уровень</Button>
                 </Link>
               )}
               {showNextInfiniteWave && infiniteWave !== undefined && (
-                <Link to={`/play/infinite/${infiniteWave + 1}`} className={styles.winLink}>
+                <Link to={brandRoute(brand, `/play/infinite/${infiniteWave + 1}`)} className={styles.winLink}>
                   <Button>Следующая волна</Button>
                 </Link>
               )}
               {showInfiniteEntry && (
-                <Link to={`/play/infinite/${nextInfiniteWave}`} className={styles.winLink}>
+                <Link to={brandRoute(brand, `/play/infinite/${nextInfiniteWave}`)} className={styles.winLink}>
                   <Button>Бесконечный режим</Button>
                 </Link>
               )}
-              <Link to="/" className={styles.winLink}>
+              <Link to={brand.basePath} className={styles.winLink}>
                 <Button
                   variant={
                     showNextLevel || showNextInfiniteWave || showInfiniteEntry ? 'ghost' : 'primary'
@@ -517,12 +538,12 @@ export const GameScreen = () => {
                 </Button>
               </Link>
               <a
-                href="https://ch.bayer.by/"
+                href={brand.siteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.winLink}
               >
-                <Button variant="ghost">Узнать о продуктах Bayer</Button>
+                <Button variant="ghost">Узнать о продуктах {brand.companyName}</Button>
               </a>
             </div>
           </div>

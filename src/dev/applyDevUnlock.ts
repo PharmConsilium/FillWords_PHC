@@ -1,6 +1,11 @@
+import { BRAND_CONFIGS, getBrandConfig, isBrandKey } from '../brands';
 import { markLevelComplete, saveProgress } from '../domain/progress/gameProgress';
 import { EMPTY_PROGRESS } from '../domain/progress/types';
-import { puzzles } from '../domain/puzzle/puzzles';
+
+const brandFromPath = (): string | undefined => {
+  const [, maybeBrand] = window.location.pathname.split('/');
+  return maybeBrand;
+};
 
 /** Только dev: ?unlock=infinite — пройти кампанию для проверки бесконечного режима. */
 export const applyDevUnlockInfinite = (): void => {
@@ -9,17 +14,26 @@ export const applyDevUnlockInfinite = (): void => {
   }
 
   const params = new URLSearchParams(window.location.search);
-  if (params.get('unlock') !== 'infinite') {
+  const unlockMode = params.get('unlock');
+  if (unlockMode !== 'infinite' && unlockMode !== 'all') {
     return;
   }
 
-  let progress = EMPTY_PROGRESS;
-  for (const puzzle of puzzles) {
-    progress = markLevelComplete(progress, puzzle.id);
+  const brands =
+    unlockMode === 'all'
+      ? Object.values(BRAND_CONFIGS)
+      : [getBrandConfig(brandFromPath())];
+
+  for (const brand of brands) {
+    let progress = EMPTY_PROGRESS;
+    for (const puzzle of brand.puzzles) {
+      progress = markLevelComplete(progress, puzzle.id);
+    }
+    saveProgress(progress, localStorage, brand.storageKey);
   }
-  saveProgress(progress);
 
   params.delete('unlock');
   const query = params.toString();
-  window.history.replaceState({}, '', query ? `?${query}` : window.location.pathname);
+  const fallbackPath = isBrandKey(brandFromPath()) ? window.location.pathname : '/bayer';
+  window.history.replaceState({}, '', query ? `${fallbackPath}?${query}` : fallbackPath);
 };

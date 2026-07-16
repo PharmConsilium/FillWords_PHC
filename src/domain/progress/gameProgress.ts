@@ -2,7 +2,7 @@ import { calculateLevelStars, type LevelCompletionStats, type LevelStars } from 
 import { discoverProduct } from './productCollection';
 import { EMPTY_PROGRESS, type GameProgress } from './types';
 
-const STORAGE_KEY = 'fillwords-phc-progress-v1';
+export const DEFAULT_STORAGE_KEY = 'fillwords-bayer-progress-v1';
 
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === 'string');
@@ -130,11 +130,17 @@ const parseProgress = (raw: string | null): GameProgress => {
   return { ...EMPTY_PROGRESS };
 };
 
-export const loadProgress = (storage: Storage = localStorage): GameProgress =>
-  parseProgress(storage.getItem(STORAGE_KEY));
+export const loadProgress = (
+  storage: Storage = localStorage,
+  storageKey = DEFAULT_STORAGE_KEY,
+): GameProgress => parseProgress(storage.getItem(storageKey));
 
-export const saveProgress = (progress: GameProgress, storage: Storage = localStorage): void => {
-  storage.setItem(STORAGE_KEY, JSON.stringify(progress));
+export const saveProgress = (
+  progress: GameProgress,
+  storage: Storage = localStorage,
+  storageKey = DEFAULT_STORAGE_KEY,
+): void => {
+  storage.setItem(storageKey, JSON.stringify(progress));
 };
 
 export const getSessionFoundWords = (
@@ -240,8 +246,9 @@ export const maxStarsAvailable = (orderedLevelIds: readonly string[]): number =>
 export const recordProductDiscovery = (
   progress: GameProgress,
   productName: string,
+  productCatalog?: readonly string[],
 ): GameProgress => {
-  const discoveredProducts = discoverProduct(progress.discoveredProducts, productName);
+  const discoveredProducts = discoverProduct(progress.discoveredProducts, productName, productCatalog);
   if (discoveredProducts.length === progress.discoveredProducts.length) {
     return progress;
   }

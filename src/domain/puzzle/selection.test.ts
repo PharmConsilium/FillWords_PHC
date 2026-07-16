@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { puzzlesById } from './puzzles';
-import { isValidSelectionStep, matchWordFromSelection } from './selection';
+import { isValidSelectionStep, matchWordFromSelection, rollbackSelectionToCoord } from './selection';
 
 const level1 = puzzlesById['level-1']!;
 
@@ -37,6 +37,23 @@ describe('isValidSelectionStep', () => {
     const a = { row: 1, col: 1 };
     const b = { row: 1, col: 2 };
     expect(isValidSelectionStep(level1, [a, b], a)).toBe(false);
+  });
+
+  it('rolls selection back to an already selected cell', () => {
+    const a = { row: 1, col: 1 };
+    const b = { row: 1, col: 2 };
+    const c = { row: 1, col: 3 };
+
+    expect(rollbackSelectionToCoord([a, b, c], b)).toEqual([a, b]);
+    expect(rollbackSelectionToCoord([a, b, c], a)).toEqual([a]);
+  });
+
+  it('does not roll back when the cell is not selected', () => {
+    const a = { row: 1, col: 1 };
+    const b = { row: 1, col: 2 };
+    const other = { row: 2, col: 2 };
+
+    expect(rollbackSelectionToCoord([a, b], other)).toBeNull();
   });
 });
 

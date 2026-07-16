@@ -1,10 +1,23 @@
 .page {
+  position: relative;
+  isolation: isolate;
   min-height: 100%;
   display: flex;
   flex-direction: column;
   padding: 20px 16px 28px;
   max-width: 520px;
   margin: 0 auto;
+}
+
+.page[data-brand='egis']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('../../brands/egis/assets/egis-background.svg');
+  background-size: 1536px 864px;
+  background-repeat: repeat;
 }
 
 .hero {
@@ -20,9 +33,10 @@
 
 .gameTitle {
   margin: 0 0 8px;
-  font-size: 36px;
+  font-size: clamp(19px, 4.2vw, 27px);
   font-weight: 700;
   line-height: 1.05;
+  white-space: nowrap;
   color: var(--color-bayer-dark);
 }
 
@@ -34,9 +48,10 @@
 }
 
 .subtitle {
-  margin: 0;
+  margin: 0 0 20px;
   font-size: 15px;
   line-height: 1.5;
+  text-align: center;
   color: var(--color-muted);
 }
 
@@ -92,67 +107,6 @@
   color: #c47d00;
 }
 
-.daily {
-  margin-bottom: 20px;
-  padding: 16px 18px;
-  background: var(--color-surface);
-  border: 1px solid rgba(0, 160, 228, 0.35);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.dailyHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.dailyTitle {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-bayer-dark);
-}
-
-.dailyBadge,
-.dailyBadgeOpen {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.dailyBadge {
-  background: rgba(137, 211, 41, 0.2);
-  color: #4a7a14;
-}
-
-.dailyBadgeOpen {
-  background: rgba(0, 160, 228, 0.15);
-  color: #0077ad;
-}
-
-.dailyMeta {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-bayer-dark);
-}
-
-.dailyHint {
-  margin: 0 0 14px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--color-muted);
-}
-
-.dailyPlay {
-  display: inline-block;
-  text-decoration: none;
-}
-
 .levelPath {
   margin-bottom: 20px;
   padding: 20px 14px 18px;
@@ -162,164 +116,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-.pathRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  min-height: 132px;
-}
-
-.pathSlot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.pathPlaceholder {
-  width: 72px;
-  height: 72px;
-  flex-shrink: 0;
-}
-
-.pathConnector {
-  flex: 1;
-  min-width: 12px;
-  max-width: 36px;
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-bayer-blue), #e879a9);
-  opacity: 0.9;
-}
-
-.orb {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: default;
-  flex-shrink: 0;
-}
-
-button.orb {
-  cursor: pointer;
-}
-
-button.orb:hover:not(.orbLocked) {
-  transform: scale(1.04);
-}
-
-button.orb:active:not(.orbLocked) {
-  transform: scale(0.98);
-}
-
-.orbSide {
-  width: 72px;
-  height: 72px;
-}
-
-.orbCenter {
-  width: 112px;
-  height: 112px;
-}
-
-.orbRing {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 5px solid var(--color-border);
-  box-shadow: inset 0 0 0 1px rgba(16, 56, 79, 0.06);
-}
-
-.orbRingCompleted {
-  border-color: var(--color-bayer-green);
-  box-shadow:
-    0 0 0 2px rgba(137, 211, 41, 0.25),
-    inset 0 0 0 1px rgba(16, 56, 79, 0.06);
-}
-
-.orbRingActive {
-  border-color: var(--color-bayer-blue);
-  box-shadow:
-    0 0 0 3px rgba(0, 160, 228, 0.2),
-    0 4px 12px rgba(0, 160, 228, 0.18),
-    inset 0 0 0 1px rgba(16, 56, 79, 0.06);
-}
-
-.orbRingActive::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: 50%;
-  width: 14px;
-  height: 14px;
-  margin-left: -7px;
-  border-radius: 50%;
-  background: var(--color-bayer-blue);
-  box-shadow: 0 0 6px rgba(0, 160, 228, 0.45);
-}
-
-.orbRingLocked {
-  border-color: #d4dde4;
-}
-
-.orbInner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: calc(100% - 18px);
-  height: calc(100% - 18px);
-  border-radius: 50%;
-  background: linear-gradient(160deg, #dce8ef 0%, #b8cdd9 100%);
-  box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.5);
-}
-
-.orbCenter .orbInner {
-  background: linear-gradient(160deg, #ffd4dc 0%, #f4a8b8 55%, #e890a5 100%);
-}
-
-.orbCompleted .orbInner {
-  background: linear-gradient(160deg, #d4f0a8 0%, #89d329 100%);
-}
-
-.orbLocked .orbInner {
-  background: linear-gradient(160deg, #e8eef2 0%, #c5d5de 100%);
-}
-
-.orbIcon {
-  font-size: 22px;
-  line-height: 1;
-}
-
-.orbCenter .orbIcon {
-  font-size: 30px;
-}
-
-.orbLabel {
-  margin-top: 2px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--color-bayer-dark);
-  line-height: 1;
-}
-
-.orbCenter .orbLabel {
-  font-size: 13px;
-}
-
-.orbLocked .orbLabel {
-  color: var(--color-muted);
-}
-
 .levelDetails {
-  margin-top: 20px;
   padding: 16px 14px;
   text-align: center;
   background: var(--color-bg);
@@ -455,19 +252,56 @@ button.orb:active:not(.orbLocked) {
 
 .campaignMap {
   margin-bottom: 20px;
-  padding: 16px 14px 18px;
+  padding: 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
 
+.campaignMapSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.campaignMapSummary::-webkit-details-marker {
+  display: none;
+}
+
 .campaignMapTitle {
-  margin: 0 0 4px;
+  display: block;
+  margin: 0;
   font-size: 16px;
   font-weight: 700;
   color: var(--color-bayer-dark);
-  text-align: center;
+}
+
+.campaignMapToggle {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-bayer-blue);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.campaignMap[open] .campaignMapToggle {
+  font-size: 0;
+}
+
+.campaignMap[open] .campaignMapToggle::before {
+  content: 'Свернуть';
+  font-size: 12px;
+}
+
+.campaignMapBody {
+  margin-top: 12px;
 }
 
 .campaignMapHint {
@@ -492,11 +326,17 @@ button.orb:active:not(.orbLocked) {
   min-width: 56px;
 }
 
+.infiniteChapter {
+  margin-left: 18px;
+}
+
 .chapterHeading {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  min-height: 25px;
+  justify-content: flex-end;
   text-align: center;
 }
 
@@ -519,6 +359,7 @@ button.orb:active:not(.orbLocked) {
 
 .chapterDots {
   display: flex;
+  align-items: center;
   gap: 6px;
 }
 
@@ -593,8 +434,12 @@ button.mapDot:hover:not(.mapDotLocked) {
 }
 
 .mapDotInfinite {
+  align-items: center;
+  justify-content: center;
   font-size: 14px;
   letter-spacing: -0.02em;
+  line-height: 1;
+  padding: 1px 4px 3px;
 }
 
 a.mapDotInfinite.mapDotUnlocked {
@@ -606,6 +451,22 @@ a.mapDotInfinite.mapDotUnlocked {
 
 a.mapDotInfinite.mapDotUnlocked:hover {
   transform: scale(1.06);
+}
+
+.infiniteWaveBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-bayer-dark);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
 }
 
 .infiniteMapPanel {
@@ -656,9 +517,10 @@ a.mapDotInfinite.mapDotUnlocked:hover {
 }
 
 .collectionCount {
+  white-space: nowrap;
   font-size: 13px;
   font-weight: 700;
-  color: #4a7a14;
+  color: var(--color-bayer-green);
 }
 
 .collectionHint {
@@ -680,9 +542,15 @@ a.mapDotInfinite.mapDotUnlocked:hover {
 }
 
 .collectionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 8px 10px;
+  min-height: 36px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
+  text-align: center;
 }
 
 .collectionItemFound {
@@ -724,8 +592,10 @@ a.mapDotInfinite.mapDotUnlocked:hover {
 }
 
 .footer a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-bayer-blue);
-  font-weight: 600;
   text-decoration: none;
 }
 
@@ -733,10 +603,3 @@ a.mapDotInfinite.mapDotUnlocked:hover {
   text-decoration: underline;
 }
 
-.slogan {
-  display: block;
-  margin-top: 8px;
-  font-size: 12px;
-  font-style: italic;
-  color: var(--color-muted);
-}

@@ -27,3 +27,17 @@ button {
 a {
   color: inherit;
 }
+
+[data-brand='egis'] {
+  --color-bayer-dark: #06417f;
+  --color-bayer-green: #06417f;
+  --color-bayer-blue: #0d5ba6;
+  --color-bayer-teal: #3f83c5;
+  --color-primary: #06417f;
+  --color-primary-hover: #053569;
+  --color-accent: #0d5ba6;
+  --color-accent-soft: #e5eef8;
+  --color-bg: #eef4fb;
+  --color-bg-accent: #d7e6f6;
+  --color-border: #b8cbe0;
+}
