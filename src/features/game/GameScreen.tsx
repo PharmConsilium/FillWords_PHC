@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { brandRoute, useBrandConfig } from '../../brands';
 import { categorizeWord } from '../../domain/catalog/wordCategory';
@@ -279,14 +279,33 @@ export const GameScreen = () => {
     setSelection([coord]);
   };
 
-  const onCellPointerEnter = (coord: CellCoord): void => {
+  const extendSelectionToCoord = (coord: CellCoord): void => {
     setSelection((prev) => {
       if (prev.length === 0) return prev;
+      if (coordKey(prev[prev.length - 1]!) === coordKey(coord)) return prev;
       const rollback = rollbackSelectionToCoord(prev, coord);
       if (rollback) return rollback;
       if (!isValidSelectionStep(puzzle, prev, coord)) return prev;
       return [...prev, coord];
     });
+  };
+
+  const onCellPointerEnter = (coord: CellCoord): void => {
+    extendSelectionToCoord(coord);
+  };
+
+  const onGridPointerMove = (event: PointerEvent<HTMLDivElement>): void => {
+    if (selection.length === 0) return;
+
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const cell = target?.closest<HTMLElement>('[data-cell-row][data-cell-col]');
+    if (!cell || !event.currentTarget.contains(cell)) return;
+
+    const row = Number(cell.dataset.cellRow);
+    const col = Number(cell.dataset.cellCol);
+    if (!Number.isInteger(row) || !Number.isInteger(col)) return;
+
+    extendSelectionToCoord({ row, col });
   };
 
   const onPointerUp = (): void => {
@@ -409,6 +428,7 @@ export const GameScreen = () => {
         <div
           className={styles.grid}
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+          onPointerMove={onGridPointerMove}
         >
           {Array.from({ length: rows * cols }, (_, index) => {
             const row = Math.floor(index / cols);
@@ -440,6 +460,8 @@ export const GameScreen = () => {
                   .filter(Boolean)
                   .join(' ')}
                 style={style}
+                data-cell-row={row}
+                data-cell-col={col}
                 onPointerDown={() => onCellPointerDown({ row, col })}
                 onPointerEnter={() => onCellPointerEnter({ row, col })}
               >

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:bayer": "tsc && vite build --mode bayer",
+    "build:egis": "tsc && vite build --mode egis",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
