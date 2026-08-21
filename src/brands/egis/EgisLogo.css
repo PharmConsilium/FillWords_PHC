@@ -2,12 +2,13 @@
   display: inline-flex;
   align-items: center;
   gap: 16px;
+  max-width: 100%;
   color: #06417f;
 }
 
 .egis-logo__mark {
   display: block;
-  width: 170px;
+  width: min(170px, 46vw);
   height: auto;
   flex-shrink: 0;
 }
@@ -16,14 +17,15 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;
   text-align: left;
 }
 
 .egis-logo__tagline {
-  font-size: 17px;
+  font-size: clamp(13px, 4.1vw, 17px);
   font-weight: 700;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
 }
 
 .egis-logo[data-compact] {
@@ -31,9 +33,36 @@
 }
 
 .egis-logo[data-compact] .egis-logo__mark {
-  width: 72px;
+  width: 56px;
 }
 
 .egis-logo[data-compact] .egis-logo__tagline {
   display: none;
+}
+
+@media (max-width: 640px) {
+  .egis-logo:not([data-compact]) {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .egis-logo:not([data-compact]) .egis-logo__mark {
+    width: min(148px, 52vw);
+  }
+
+  .egis-logo:not([data-compact]) .egis-logo__text {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .egis-logo:not([data-compact]) .egis-logo__tagline {
+    max-width: 100%;
+    text-wrap: balance;
+  }
+
+  .egis-logo[data-compact] .egis-logo__mark {
+    width: 48px;
+  }
 }

@@ -56,13 +56,13 @@ const MapDot = ({ levelIndex, completed, unlocked, isActive, stars, onSelect }: 
 };
 
 type InfiniteMapDotProps = {
-  basePath: string;
+  playPath: string;
   unlocked: boolean;
   nextWave: number;
   record: number;
 };
 
-const InfiniteMapDot = ({ basePath, unlocked, nextWave, record }: InfiniteMapDotProps) => {
+const InfiniteMapDot = ({ playPath, unlocked, nextWave, record }: InfiniteMapDotProps) => {
   const label = unlocked
     ? `Бесконечный режим, волна ${nextWave}${record > 0 ? `, рекорд ${record}` : ''}`
     : 'Бесконечный режим — откроется после 18-го уровня';
@@ -85,7 +85,7 @@ const InfiniteMapDot = ({ basePath, unlocked, nextWave, record }: InfiniteMapDot
   return (
     <>
       <Link
-        to={`${basePath}/play/infinite/${nextWave}`}
+        to={playPath}
         className={[styles.mapDot, styles.mapDotInfinite, styles.mapDotUnlocked].join(' ')}
         aria-label={label}
         title={label}
@@ -311,7 +311,7 @@ export const HomeScreen = () => {
             </div>
             <div className={styles.chapterDots}>
               <InfiniteMapDot
-                basePath={brand.basePath}
+                playPath={brandRoute(brand, `/play/infinite/${nextInfiniteWave}`)}
                 unlocked={infiniteUnlocked}
                 nextWave={nextInfiniteWave}
                 record={infiniteWaveCompleted}

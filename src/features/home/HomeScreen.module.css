@@ -1,23 +1,17 @@
 .page {
   position: relative;
-  isolation: isolate;
   min-height: 100%;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: 20px 16px 28px;
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: max(28px, env(safe-area-inset-bottom));
+  padding-left: max(16px, env(safe-area-inset-left));
   max-width: 520px;
   margin: 0 auto;
-}
-
-.page[data-brand='egis']::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: url('../../brands/egis/assets/egis-background.svg');
-  background-size: 1536px 864px;
-  background-repeat: repeat;
+  overflow-x: hidden;
 }
 
 .hero {
@@ -33,10 +27,10 @@
 
 .gameTitle {
   margin: 0 0 8px;
-  font-size: clamp(19px, 4.2vw, 27px);
+  font-size: clamp(18px, 5.4vw, 27px);
   font-weight: 700;
-  line-height: 1.05;
-  white-space: nowrap;
+  line-height: 1.2;
+  text-wrap: balance;
   color: var(--color-bayer-dark);
 }
 
@@ -601,5 +595,84 @@ a.mapDotInfinite.mapDotUnlocked:hover {
 
 .footer a:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+
+  .hero {
+    margin-bottom: 12px;
+  }
+
+  .logoWrap {
+    margin-bottom: 10px;
+    max-width: 100%;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    margin-bottom: 14px;
+    padding: 0 4px;
+  }
+
+  .levelPath,
+  .campaign,
+  .campaignMap,
+  .collection {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .levelTitle {
+    font-size: 18px;
+  }
+
+  .pathNav {
+    gap: 8px;
+  }
+
+  .pathNavBtn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .pathNavLabel {
+    min-width: 0;
+    flex: 1;
+    font-size: 13px;
+  }
+
+  .infiniteChapter {
+    margin-left: 0;
+    flex-basis: 100%;
+    margin-top: 4px;
+  }
+
+  .chapterLabel,
+  .chapterSubtitle {
+    white-space: normal;
+    max-width: 112px;
+  }
+
+  .collectionHeader {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .collectionTitle {
+    font-size: 15px;
+    line-height: 1.3;
+  }
+
+  .collectionList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: min(320px, 48vh);
+  }
 }
 

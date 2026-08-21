@@ -8,6 +8,7 @@ import './styles/global.css';
 
 applyDevUnlockInfinite();
 
+document.documentElement.dataset.brand = DEFAULT_BRAND_KEY;
 document.title = `Филворды ${BRAND_CONFIGS[DEFAULT_BRAND_KEY].companyName}`;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

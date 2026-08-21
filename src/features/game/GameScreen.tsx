@@ -373,7 +373,8 @@ export const GameScreen = () => {
     >
       <header className={styles.topBar}>
         <Link to={brand.basePath} className={styles.back}>
-          ← В главное меню
+          <span className={styles.backLabelFull}>← В главное меню</span>
+          <span className={styles.backLabelShort}>← Меню</span>
         </Link>
         <div className={styles.headerMain}>
           <h1 className={styles.title}>{puzzle.title}</h1>
