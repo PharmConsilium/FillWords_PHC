@@ -1,13 +1,11 @@
 {
-  "name": "fillwords-phc",
+  "name": "fillwords-byer",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "build:bayer": "tsc && vite build --mode bayer",
-    "build:egis": "tsc && vite build --mode egis",
+    "dev": "vite --mode bayer",
+    "build": "tsc && vite build --mode bayer",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"

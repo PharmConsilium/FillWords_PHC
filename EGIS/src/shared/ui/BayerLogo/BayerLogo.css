@@ -1,0 +1,40 @@
+.bayer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bayer-logo__mark {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+
+.bayer-logo[data-compact] .bayer-logo__mark {
+  width: 32px;
+  height: 32px;
+}
+
+.bayer-logo__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.bayer-logo__brand {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-bayer-dark);
+}
+
+.bayer-logo__division {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}

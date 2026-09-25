@@ -1,0 +1,30 @@
+---
+description: FillWords core TypeScript and React conventions
+alwaysApply: true
+---
+
+# FillWords — Core Rules
+
+## Goals
+
+- Keep changes small, reviewable, and testable.
+- Separate puzzle logic (`domain/`) from UI (`features/`).
+
+## TypeScript
+
+- Use strict TypeScript; prefer `unknown` over `any`.
+- Export types intentionally from domain modules.
+
+## React
+
+- Function components and hooks only.
+- Derive state where possible; avoid duplicating puzzle state in UI.
+
+## Testing
+
+- Unit-test pure puzzle logic in `domain/`.
+- Prefer behavior tests over implementation details.
+
+## Git
+
+- Meaningful commit messages explaining why.

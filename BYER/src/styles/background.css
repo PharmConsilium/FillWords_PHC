@@ -1,0 +1,38 @@
+/* Viewport-fixed layer: covers the full window even when body height collapses. */
+
+html {
+  min-height: 100%;
+  min-height: 100dvh;
+  background-color: #bfe8dc;
+}
+
+body {
+  isolation: isolate;
+  min-height: 100%;
+  min-height: 100dvh;
+  background-color: transparent;
+}
+
+/* Layer order: first = top. Opaque gradient must be last so the pattern stays visible. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #bfe8dc;
+  background-image:
+    radial-gradient(ellipse 70% 55% at 18% 12%, rgba(137, 211, 41, 0.14), transparent 62%),
+    radial-gradient(ellipse 65% 50% at 88% 88%, rgba(0, 188, 255, 0.12), transparent 58%),
+    url('./bayer-pattern.svg'),
+    linear-gradient(
+      152deg,
+      #a8dfd0 0%,
+      #c2edd8 28%,
+      #b8e8f0 58%,
+      #a5dcc4 100%
+    );
+  background-size: auto, auto, 220px 191px, auto;
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-position: 0 0;
+}
