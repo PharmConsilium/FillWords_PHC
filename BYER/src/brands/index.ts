@@ -2,16 +2,25 @@ import { useParams } from 'react-router-dom';
 import { bayerConfig } from './bayer/config';
 import type { BrandConfig, BrandKey } from './types';
 
-export const BRAND_CONFIGS: Record<BrandKey, BrandConfig> = {
-  bayer: bayerConfig,
-};
-
 export const isBrandKey = (value: string | undefined): value is BrandKey => value === 'bayer';
 
-export const DEFAULT_BRAND_KEY: BrandKey = 'bayer';
+const configuredBrandKey = import.meta.env.VITE_BRAND?.toLowerCase();
+
+export const ACTIVE_BRAND_KEY: BrandKey | undefined = isBrandKey(configuredBrandKey)
+  ? configuredBrandKey
+  : undefined;
+
+export const DEFAULT_BRAND_KEY: BrandKey = ACTIVE_BRAND_KEY ?? 'bayer';
+
+const withDeployBasePath = (config: BrandConfig): BrandConfig =>
+  ACTIVE_BRAND_KEY ? { ...config, basePath: '/' } : config;
+
+export const BRAND_CONFIGS: Record<BrandKey, BrandConfig> = {
+  bayer: withDeployBasePath(bayerConfig),
+};
 
 export const isEnabledBrandKey = (value: string | undefined): value is BrandKey =>
-  isBrandKey(value);
+  isBrandKey(value) && (ACTIVE_BRAND_KEY === undefined || value === ACTIVE_BRAND_KEY);
 
 export const getBrandConfig = (brandKey: string | undefined): BrandConfig =>
   isEnabledBrandKey(brandKey) ? BRAND_CONFIGS[brandKey] : BRAND_CONFIGS[DEFAULT_BRAND_KEY];
@@ -21,5 +30,11 @@ export const useBrandConfig = (): BrandConfig => {
   return getBrandConfig(brandKey);
 };
 
-export const brandRoute = (brand: BrandConfig, path: string): string =>
-  `${brand.basePath}${path.startsWith('/') ? path : `/${path}`}`;
+export const brandRoute = (brand: BrandConfig, path: string): string => {
+  const suffix = path.startsWith('/') ? path : `/${path}`;
+  const base = brand.basePath.replace(/\/$/, '');
+  if (suffix === '/') {
+    return base || '/';
+  }
+  return `${base}${suffix}`;
+};
